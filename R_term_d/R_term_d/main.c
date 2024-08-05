@@ -136,13 +136,21 @@ uint16_t read_mcp3208(uint8_t channel) {
 }
 
 int get_temperature(uint16_t adc_value) {
-	float voltage = adc_value * (5.0 / 4096.0); // Convert ADC value to voltage
-	float resistance = (voltage * 1000.0) / (5.0 - voltage); // Calculate RTD resistance
+	// Convert ADC value to voltage
+	float voltage = adc_value * (5.0 / 4096.0);
 	
-	float calibration_offset = 0.0; 
-	float calibration_slope = 1.0;  
+	// Calculate RTD resistance
+	float resistance = (voltage * 1000.0) / (5.0 - voltage);
 
-	int temperature = (int)(((resistance - 100.0) / 0.385) * calibration_slope + calibration_offset); // Calculate temperature
+	// Constants for RTD (Pt100)
+	float R0 = 100.0; // Resistance at 0°C
+	float A = 3.9083e-3; // Coefficient A
+	float B = -5.775e-7; // Coefficient B
 
-	return temperature;
+	// Calculate temperature using Callendar-Van Dusen equation
+	float temperature = (-A + sqrt(A * A - 4 * B * (1 - resistance / R0))) / (2 * B);
+	
+	temperature += 32.0;
+	
+	return (int)temperature;
 }
